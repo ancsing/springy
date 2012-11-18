@@ -26,6 +26,7 @@
  */
 
 var Graph = function() {
+    "use strict";
 	this.nodeSet = {};
 	this.nodes = [];
 	this.edges = [];
@@ -37,11 +38,13 @@ var Graph = function() {
 };
 
 var Node = function(id, data) {
+    "use strict";
 	this.id = id;
 	this.data = typeof(data) !== 'undefined' ? data : {};
 };
 
 var Edge = function(id, source, target, data) {
+    "use strict";
 	this.id = id;
 	this.source = source;
 	this.target = target;
@@ -49,6 +52,7 @@ var Edge = function(id, source, target, data) {
 };
 
 Graph.prototype.addNode = function(node) {
+    "use strict";
 	if (typeof(this.nodeSet[node.id]) === 'undefined') {
 		this.nodes.push(node);
 	}
@@ -60,6 +64,7 @@ Graph.prototype.addNode = function(node) {
 };
 
 Graph.prototype.addEdge = function(edge) {
+    "use strict";
 	var exists = false;
 	this.edges.forEach(function(e) {
 		if (edge.id === e.id) { exists = true; }
@@ -90,21 +95,24 @@ Graph.prototype.addEdge = function(edge) {
 };
 
 Graph.prototype.newNode = function(data) {
-	var node = new Node(this.nextNodeId++, data);
+    "use strict";
+	var node = new Node(this.nextNodeId += 1, data);
 	this.addNode(node);
 	return node;
 };
 
 Graph.prototype.newEdge = function(source, target, data) {
-	var edge = new Edge(this.nextEdgeId++, source, target, data);
+    "use strict";
+	var edge = new Edge(this.nextEdgeId += 1, source, target, data);
 	this.addEdge(edge);
 	return edge;
 };
 
 // find the edges from node1 to node2
 Graph.prototype.getEdges = function(node1, node2) {
-	if (typeof(this.adjacency[node1.id]) !== 'undefined'
-		&& typeof(this.adjacency[node1.id][node2.id]) !== 'undefined') {
+    "use strict";
+	if (typeof(this.adjacency[node1.id]) !== 'undefined' &&
+            typeof(this.adjacency[node1.id][node2.id]) !== 'undefined') {
 		return this.adjacency[node1.id][node2.id];
 	}
 
@@ -113,11 +121,12 @@ Graph.prototype.getEdges = function(node1, node2) {
 
 // remove a node and it's associated edges from the graph
 Graph.prototype.removeNode = function(node) {
+    "use strict";
 	if (typeof(this.nodeSet[node.id]) !== 'undefined') {
 		delete this.nodeSet[node.id];
 	}
 
-	for (var i = this.nodes.length - 1; i >= 0; i--) {
+	for (var i = this.nodes.length - 1; i >= 0; i -= 1) {
 		if (this.nodes[i].id === node.id) {
 			this.nodes.splice(i, 1);
 		}
@@ -129,6 +138,7 @@ Graph.prototype.removeNode = function(node) {
 
 // removes edges associated with a given node
 Graph.prototype.detachNode = function(node) {
+    "use strict";
 	var tmpEdges = this.edges.slice();
 	tmpEdges.forEach(function(e) {
 		if (e.source.id === node.id || e.target.id === node.id) {
@@ -141,22 +151,27 @@ Graph.prototype.detachNode = function(node) {
 
 // remove a node and it's associated edges from the graph
 Graph.prototype.removeEdge = function(edge) {
-	for (var i = this.edges.length - 1; i >= 0; i--) {
+    "use strict";
+	for (var i = this.edges.length - 1; i >= 0; i -= 1) {
 		if (this.edges[i].id === edge.id) {
 			this.edges.splice(i, 1);
 		}
 	}
 
 	for (var x in this.adjacency) {
-		for (var y in this.adjacency[x]) {
-			var edges = this.adjacency[x][y];
+        if (this.adjacency.hasOwnProperty(x)) {
+            for (var y in this.adjacency[x]) {
+                if (this.adjacency[x].hasOwnProperty(y)) {
+                    var edges = this.adjacency[x][y];
 
-			for (var j=edges.length - 1; j>=0; j--) {
-				if (this.adjacency[x][y][j].id === edge.id) {
-					this.adjacency[x][y].splice(j, 1);
-				}
-			}
-		}
+                    for (var j=edges.length - 1; j>=0; j -= 1) {
+                        if (this.adjacency[x][y][j].id === edge.id) {
+                            this.adjacency[x][y].splice(j, 1);
+                        }
+                    }
+                }
+            }
+        }
 	}
 
 	this.notify();
@@ -174,6 +189,7 @@ var o = {
 }
 */
 Graph.prototype.merge = function(data) {
+    "use strict";
 	var nodes = [];
 	data.nodes.forEach(function(n) {
 		nodes.push(this.addNode(new Node(n.id, n.data)));
@@ -183,10 +199,10 @@ Graph.prototype.merge = function(data) {
 		var from = nodes[e.from];
 		var to = nodes[e.to];
 
-		var id = (e.directed)
-			? (id = e.type + "-" + from.id + "-" + to.id)
-			: (from.id < to.id) // normalise id for non-directed edges
-				? e.type + "-" + from.id + "-" + to.id
+		var id = (e.directed) ?
+        (id = e.type + "-" + from.id + "-" + to.id)
+			: (from.id < to.id) ? // normalise id for non-directed edges
+			e.type + "-" + from.id + "-" + to.id
 				: e.type + "-" + to.id + "-" + from.id;
 
 		var edge = this.addEdge(new Edge(id, from, to, e.data));
@@ -195,6 +211,7 @@ Graph.prototype.merge = function(data) {
 };
 
 Graph.prototype.filterNodes = function(fn) {
+    "use strict";
 	var tmpNodes = this.nodes.slice();
 	tmpNodes.forEach(function(n) {
 		if (!fn(n)) {
@@ -204,6 +221,7 @@ Graph.prototype.filterNodes = function(fn) {
 };
 
 Graph.prototype.filterEdges = function(fn) {
+    "use strict";
 	var tmpEdges = this.edges.slice();
 	tmpEdges.forEach(function(e) {
 		if (!fn(e)) {
@@ -214,18 +232,68 @@ Graph.prototype.filterEdges = function(fn) {
 
 
 Graph.prototype.addGraphListener = function(obj) {
+    "use strict";
 	this.eventListeners.push(obj);
 };
 
 Graph.prototype.notify = function() {
+    "use strict";
 	this.eventListeners.forEach(function(obj){
 		obj.graphChanged();
 	});
 };
 
+// Vector
+var Vector = function(x, y) {
+    "use strict";
+	this.x = x;
+	this.y = y;
+};
+
+Vector.random = function() {
+    "use strict";
+	return new Vector(10.0 * (Math.random() - 0.5), 10.0 * (Math.random() - 0.5));
+};
+
+Vector.prototype.add = function(v2) {
+    "use strict";
+	return new Vector(this.x + v2.x, this.y + v2.y);
+};
+
+Vector.prototype.subtract = function(v2) {
+    "use strict";
+	return new Vector(this.x - v2.x, this.y - v2.y);
+};
+
+Vector.prototype.multiply = function(n) {
+    "use strict";
+	return new Vector(this.x * n, this.y * n);
+};
+
+Vector.prototype.divide = function(n) {
+    "use strict";
+	return new Vector((this.x / n) || 0, (this.y / n) || 0); // Avoid divide by zero errors..
+};
+
+Vector.prototype.magnitude = function() {
+    "use strict";
+	return Math.sqrt(this.x*this.x + this.y*this.y);
+};
+
+Vector.prototype.normal = function() {
+    "use strict";
+	return new Vector(-this.y, this.x);
+};
+
+Vector.prototype.normalise = function() {
+    "use strict";
+	return this.divide(this.magnitude());
+};
+
 // -----------
 var Layout = {};
 Layout.ForceDirected = function(graph, stiffness, repulsion, damping) {
+    "use strict";
 	this.graph = graph;
 	this.stiffness = stiffness; // spring stiffness constant
 	this.repulsion = repulsion; // repulsion constant
@@ -236,6 +304,7 @@ Layout.ForceDirected = function(graph, stiffness, repulsion, damping) {
 };
 
 Layout.ForceDirected.prototype.point = function(node) {
+    "use strict";
 	if (typeof(this.nodePoints[node.id]) === 'undefined') {
 		var mass = typeof(node.data.mass) !== 'undefined' ? node.data.mass : 1.0;
 		this.nodePoints[node.id] = new Layout.ForceDirected.Point(Vector.random(), mass);
@@ -245,6 +314,7 @@ Layout.ForceDirected.prototype.point = function(node) {
 };
 
 Layout.ForceDirected.prototype.spring = function(edge) {
+    "use strict";
 	if (typeof(this.edgeSprings[edge.id]) === 'undefined') {
 		var length = typeof(edge.data.length) !== 'undefined' ? edge.data.length : 1.0;
 
@@ -282,6 +352,7 @@ Layout.ForceDirected.prototype.spring = function(edge) {
 
 // callback should accept two arguments: Node, Point
 Layout.ForceDirected.prototype.eachNode = function(callback) {
+    "use strict";
 	var t = this;
 	this.graph.nodes.forEach(function(n){
 		callback.call(t, n, t.point(n));
@@ -290,6 +361,7 @@ Layout.ForceDirected.prototype.eachNode = function(callback) {
 
 // callback should accept two arguments: Edge, Spring
 Layout.ForceDirected.prototype.eachEdge = function(callback) {
+    "use strict";
 	var t = this;
 	this.graph.edges.forEach(function(e){
 		callback.call(t, e, t.spring(e));
@@ -298,6 +370,7 @@ Layout.ForceDirected.prototype.eachEdge = function(callback) {
 
 // callback should accept one argument: Spring
 Layout.ForceDirected.prototype.eachSpring = function(callback) {
+    "use strict";
 	var t = this;
 	this.graph.edges.forEach(function(e){
 		callback.call(t, t.spring(e));
@@ -307,6 +380,7 @@ Layout.ForceDirected.prototype.eachSpring = function(callback) {
 
 // Physics stuff
 Layout.ForceDirected.prototype.applyCoulombsLaw = function() {
+    "use strict";
 	this.eachNode(function(n1, point1) {
 		this.eachNode(function(n2, point2) {
 			if (point1 !== point2)
@@ -324,6 +398,7 @@ Layout.ForceDirected.prototype.applyCoulombsLaw = function() {
 };
 
 Layout.ForceDirected.prototype.applyHookesLaw = function() {
+    "use strict";
 	this.eachSpring(function(spring){
 		var d = spring.point2.p.subtract(spring.point1.p); // the direction of the spring
 		var displacement = spring.length - d.magnitude();
@@ -336,6 +411,7 @@ Layout.ForceDirected.prototype.applyHookesLaw = function() {
 };
 
 Layout.ForceDirected.prototype.attractToCentre = function() {
+    "use strict";
 	this.eachNode(function(node, point) {
 		var direction = point.p.multiply(-1.0);
 		point.applyForce(direction.multiply(this.repulsion / 50.0));
@@ -344,6 +420,7 @@ Layout.ForceDirected.prototype.attractToCentre = function() {
 
 
 Layout.ForceDirected.prototype.updateVelocity = function(timestep) {
+    "use strict";
 	this.eachNode(function(node, point) {
 		// Is this, along with updatePosition below, the only places that your
 		// integration code exist?
@@ -353,6 +430,7 @@ Layout.ForceDirected.prototype.updateVelocity = function(timestep) {
 };
 
 Layout.ForceDirected.prototype.updatePosition = function(timestep) {
+    "use strict";
 	this.eachNode(function(node, point) {
 		// Same question as above; along with updateVelocity, is this all of
 		// your integration code?
@@ -362,6 +440,7 @@ Layout.ForceDirected.prototype.updatePosition = function(timestep) {
 
 // Calculate the total kinetic energy of the system
 Layout.ForceDirected.prototype.totalEnergy = function(timestep) {
+    "use strict";
 	var energy = 0.0;
 	this.eachNode(function(node, point) {
 		var speed = point.v.magnitude();
@@ -371,7 +450,10 @@ Layout.ForceDirected.prototype.totalEnergy = function(timestep) {
 	return energy;
 };
 
-var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }; // stolen from coffeescript, thanks jashkenas! ;-)
+var __bind = function(fn, me){
+    "use strict";
+    return function(){ return fn.apply(me, arguments); }; }; // stolen from coffeescript, thanks jashkenas! ;-)
+
 
 Layout.requestAnimationFrame = __bind(window.requestAnimationFrame ||
 	window.webkitRequestAnimationFrame ||
@@ -379,15 +461,19 @@ Layout.requestAnimationFrame = __bind(window.requestAnimationFrame ||
 	window.oRequestAnimationFrame ||
 	window.msRequestAnimationFrame ||
 	function(callback, element) {
+        "use strict";
 		window.setTimeout(callback, 10);
 	}, window);
 
 
 // start simulation
 Layout.ForceDirected.prototype.start = function(render, done) {
+    "use strict";
 	var t = this;
 
-	if (this._started) return;
+	if (this._started) {
+        return;
+    }
 	this._started = true;
 
 	Layout.requestAnimationFrame(function step() {
@@ -397,8 +483,9 @@ Layout.ForceDirected.prototype.start = function(render, done) {
 		t.updateVelocity(0.03);
 		t.updatePosition(0.03);
 
-		if (typeof(render) !== 'undefined')
+		if (typeof(render) !== 'undefined') {
 			render();
+        }
 
 		// stop simulation when energy of the system goes below a threshold
 		if (t.totalEnergy() < 0.01) {
@@ -412,6 +499,7 @@ Layout.ForceDirected.prototype.start = function(render, done) {
 
 // Find the nearest point to a particular position
 Layout.ForceDirected.prototype.nearest = function(pos) {
+    "use strict";
 	var min = {node: null, point: null, distance: null};
 	var t = this;
 	this.graph.nodes.forEach(function(n){
@@ -428,6 +516,7 @@ Layout.ForceDirected.prototype.nearest = function(pos) {
 
 // returns [bottomleft, topright]
 Layout.ForceDirected.prototype.getBoundingBox = function() {
+    "use strict";
 	var bottomleft = new Vector(-2,-2);
 	var topright = new Vector(2,2);
 
@@ -452,46 +541,10 @@ Layout.ForceDirected.prototype.getBoundingBox = function() {
 };
 
 
-// Vector
-Vector = function(x, y) {
-	this.x = x;
-	this.y = y;
-};
-
-Vector.random = function() {
-	return new Vector(10.0 * (Math.random() - 0.5), 10.0 * (Math.random() - 0.5));
-};
-
-Vector.prototype.add = function(v2) {
-	return new Vector(this.x + v2.x, this.y + v2.y);
-};
-
-Vector.prototype.subtract = function(v2) {
-	return new Vector(this.x - v2.x, this.y - v2.y);
-};
-
-Vector.prototype.multiply = function(n) {
-	return new Vector(this.x * n, this.y * n);
-};
-
-Vector.prototype.divide = function(n) {
-	return new Vector((this.x / n) || 0, (this.y / n) || 0); // Avoid divide by zero errors..
-};
-
-Vector.prototype.magnitude = function() {
-	return Math.sqrt(this.x*this.x + this.y*this.y);
-};
-
-Vector.prototype.normal = function() {
-	return new Vector(-this.y, this.x);
-};
-
-Vector.prototype.normalise = function() {
-	return this.divide(this.magnitude());
-};
 
 // Point
 Layout.ForceDirected.Point = function(position, mass) {
+    "use strict";
 	this.p = position; // position
 	this.m = mass; // mass
 	this.v = new Vector(0, 0); // velocity
@@ -499,11 +552,13 @@ Layout.ForceDirected.Point = function(position, mass) {
 };
 
 Layout.ForceDirected.Point.prototype.applyForce = function(force) {
+    "use strict";
 	this.a = this.a.add(force.divide(this.m));
 };
 
 // Spring
 Layout.ForceDirected.Spring = function(point1, point2, length, k) {
+    "use strict";
 	this.point1 = point1;
 	this.point2 = point2;
 	this.length = length; // spring length at rest
@@ -512,15 +567,16 @@ Layout.ForceDirected.Spring = function(point1, point2, length, k) {
 
 // Layout.ForceDirected.Spring.prototype.distanceToPoint = function(point)
 // {
-// 	// hardcore vector arithmetic.. ohh yeah!
-// 	// .. see http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment/865080#865080
-// 	var n = this.point2.p.subtract(this.point1.p).normalise().normal();
-// 	var ac = point.p.subtract(this.point1.p);
-// 	return Math.abs(ac.x * n.x + ac.y * n.y);
+//hardcore vector arithmetic.. ohh yeah!
+//.. see http://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment/865080#865080
+//var n = this.point2.p.subtract(this.point1.p).normalise().normal();
+//var ac = point.p.subtract(this.point1.p);
+//return Math.abs(ac.x * n.x + ac.y * n.y);
 // };
 
 // Renderer handles the layout rendering loop
 function Renderer(layout, clear, drawEdge, drawNode) {
+    "use strict";
 	this.layout = layout;
 	this.clear = clear;
 	this.drawEdge = drawEdge;
@@ -530,10 +586,12 @@ function Renderer(layout, clear, drawEdge, drawNode) {
 }
 
 Renderer.prototype.graphChanged = function(e) {
+    "use strict";
 	this.start();
 };
 
 Renderer.prototype.start = function() {
+    "use strict";
 	var t = this;
 	this.layout.start(function render() {
 		t.clear();
@@ -547,32 +605,4 @@ Renderer.prototype.start = function() {
 		});
 	});
 };
-
-// Array.forEach implementation for IE support..
-//https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Array/forEach
-if ( !Array.prototype.forEach ) {
-  Array.prototype.forEach = function( callback, thisArg ) {
-    var T, k;
-    if ( this == null ) {
-      throw new TypeError( " this is null or not defined" );
-    }
-    var O = Object(this);
-    var len = O.length >>> 0; // Hack to convert O.length to a UInt32
-    if ( {}.toString.call(callback) != "[object Function]" ) {
-      throw new TypeError( callback + " is not a function" );
-    }
-    if ( thisArg ) {
-      T = thisArg;
-    }
-    k = 0;
-    while( k < len ) {
-      var kValue;
-      if ( k in O ) {
-        kValue = O[ k ];
-        callback.call( T, kValue, k, O );
-      }
-      k++;
-    }
-  };
-}
 

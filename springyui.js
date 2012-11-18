@@ -1,3 +1,5 @@
+/*global Graph, Vector, Layout, toScreen:true, fromScreen:true, Node, Renderer */
+
 /**
 Copyright (c) 2010 Dennis Hotson
 
@@ -24,6 +26,8 @@ Copyright (c) 2010 Dennis Hotson
 */
 
 (function() {
+    "use strict";
+
 
 jQuery.fn.springy = function(params) {
 	var graph = this.graph = params.graph || new Graph();
@@ -113,15 +117,18 @@ jQuery.fn.springy = function(params) {
 
 	Node.prototype.getWidth = function() {
 		var text = typeof(this.data.label) !== 'undefined' ? this.data.label : this.id;
-		if (this._width && this._width[text])
+		if (this._width && this._width[text]) {
 			return this._width[text];
+        }
 
 		ctx.save();
 		ctx.font = "16px Verdana, sans-serif";
 		var width = ctx.measureText(text).width + 10;
 		ctx.restore();
 
-		this._width || (this._width = {});
+		if (typeof this._width !== "object") {
+            this._width = {};
+        }
 		this._width[text] = width;
 
 		return width;
@@ -136,6 +143,7 @@ jQuery.fn.springy = function(params) {
 			ctx.clearRect(0,0,canvas.width,canvas.height);
 		},
 		function drawEdge(edge, p1, p2) {
+            var text = "";
 			var x1 = toScreen(p1).x;
 			var y1 = toScreen(p1).y;
 			var x2 = toScreen(p2).x;
@@ -151,7 +159,7 @@ jQuery.fn.springy = function(params) {
 
 			// Figure out edge's position in relation to other edges between the same nodes
 			var n = 0;
-			for (var i=0; i<from.length; i++) {
+			for (var i=0; i<from.length; i += 1) {
 				if (from[i].id === edge.id) {
 					n = i;
 				}
@@ -219,7 +227,7 @@ jQuery.fn.springy = function(params) {
 
 			// label
 			if (typeof(edge.data.label) !== 'undefined') {
-				text = edge.data.label
+				text = edge.data.label;
 				ctx.save();
 				ctx.textAlign = "center";
 				ctx.textBaseline = "top";
@@ -290,16 +298,20 @@ jQuery.fn.springy = function(params) {
 		var bl = {x: p3.x, y: p3.y + h};
 		var br = {x: p3.x + w, y: p3.y + h};
 
-		var result;
-		if (result = intersect_line_line(p1, p2, tl, tr)) { return result; } // top
-		if (result = intersect_line_line(p1, p2, tr, br)) { return result; } // right
-		if (result = intersect_line_line(p1, p2, br, bl)) { return result; } // bottom
-		if (result = intersect_line_line(p1, p2, bl, tl)) { return result; } // left
+
+        var result = intersect_line_line(p1, p2, tl, tr);
+		if (result) { return result; } // top
+        result = intersect_line_line(p1, p2, tr, br);
+		if (result) { return result; } // right
+        result = intersect_line_line(p1, p2, br, bl);
+		if (result) { return result; } // bottom
+        result = intersect_line_line(p1, p2, bl, tl);
+		if (result) { return result; } // left
 
 		return false;
 	}
 
 	return this;
-}
+};
 
-})();
+}());
