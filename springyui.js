@@ -1,4 +1,4 @@
-/*global Graph, Vector, Layout, toScreen:true, fromScreen:true, Node, Renderer */
+/*global console, Graph, Vector, Layout, toScreen:true, fromScreen:true, Node, Renderer */
 
 /**
 Copyright (c) 2010 Dennis Hotson
@@ -36,6 +36,8 @@ jQuery.fn.springy = function(params) {
 	var repulsion = params.repulsion || 400.0;
 	var damping = params.damping || 0.5;
 	var nodeSelected = params.nodeSelected || null;
+	var nodeNearest = params.nodeNearest || null;
+    var backgroundColor = params.backgroundColor || null;
 
 	var canvas = this[0];
 	var ctx = canvas.getContext("2d");
@@ -61,14 +63,14 @@ jQuery.fn.springy = function(params) {
 	});
 
 	// convert to/from screen coordinates
-	toScreen = function(p) {
+	var toScreen = function(p) {
 		var size = currentBB.topright.subtract(currentBB.bottomleft);
 		var sx = p.subtract(currentBB.bottomleft).divide(size.x).x * canvas.width;
 		var sy = p.subtract(currentBB.bottomleft).divide(size.y).y * canvas.height;
 		return new Vector(sx, sy);
 	};
 
-	fromScreen = function(s) {
+	var fromScreen = function(s) {
 		var size = currentBB.topright.subtract(currentBB.bottomleft);
 		var px = (s.x / canvas.width) * size.x + currentBB.bottomleft.x;
 		var py = (s.y / canvas.height) * size.y + currentBB.bottomleft.y;
@@ -102,6 +104,11 @@ jQuery.fn.springy = function(params) {
 		var pos = jQuery(this).offset();
 		var p = fromScreen({x: e.pageX - pos.left, y: e.pageY - pos.top});
 		nearest = layout.nearest(p);
+
+        if (nodeNearest) {
+            nodeNearest(nearest);
+        }
+
 
 		if (dragged !== null && dragged.node !== null) {
 			dragged.point.p.x = p.x;
@@ -140,7 +147,13 @@ jQuery.fn.springy = function(params) {
 
 	var renderer = new Renderer(layout,
 		function clear() {
-			ctx.clearRect(0,0,canvas.width,canvas.height);
+            if (backgroundColor) {
+                ctx.fillStyle = backgroundColor;
+                ctx.fillRect(0,0,canvas.width,canvas.height);
+            } else {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
+
 		},
 		function drawEdge(edge, p1, p2) {
             var text = "";
@@ -251,13 +264,31 @@ jQuery.fn.springy = function(params) {
 
 			// fill background
 			if (selected !== null && nearest.node !== null && selected.node.id === node.id) {
-				ctx.fillStyle = "#FFFFE0";
+                if (node.data && node.data.selectedColor) {
+                    ctx.strokeStyle = node.data.selectedColor;
+                    ctx.fillStyle = node.data.color ? node.data.color : "#FFFFE0";
+                } else {
+                    ctx.fillStyle = "#FFFFE0";
+                }
 			} else if (nearest !== null && nearest.node !== null && nearest.node.id === node.id) {
-				ctx.fillStyle = "#EEEEEE";
+                if (node.data && node.data.nearestColor) {
+                    ctx.strokeStyle = node.data.nearestColor;
+                    ctx.fillStyle = node.data.color ? node.data.color : "#EEEEEE";
+                } else {
+                    ctx.fillStyle = "#EEEEEE";
+                }
 			} else {
-				ctx.fillStyle = "#FFFFFF";
+                if (node.data && node.data.color) {
+                    ctx.strokeStyle = node.data.color;
+                    ctx.fillStyle = node.data.color;
+                } else {
+                    ctx.fillStyle = "#FFFFFF";
+                }
 			}
 			ctx.fillRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
+            ctx.lineWidth = 2;
+            ctx.strokeRect(s.x - boxWidth/2, s.y - 10, boxWidth, 20);
+            ctx.lineWidth = 1;
 
 			ctx.textAlign = "left";
 			ctx.textBaseline = "top";
